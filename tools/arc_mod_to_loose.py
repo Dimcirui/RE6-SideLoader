@@ -40,7 +40,8 @@ def digest(data: bytes) -> str:
 
 class RetailDB:
     def __init__(self, path: Path):
-        with gzip.open(path, "rt", encoding="utf-8") as fh:
+        opener = gzip.open if path.suffix == ".gz" else open  # plain .json in the portable package
+        with opener(path, "rt", encoding="utf-8") as fh:
             db = json.load(fh)
         self.info = {k: db[k] for k in ("game", "built", "exe_md5")}
         paths = db["paths"]
@@ -186,7 +187,8 @@ def main():
     ap.add_argument("-o", "--out", type=Path, help="output .zip (one input only; default: <mod>_sideload.zip)")
     ap.add_argument("--name", help="name of the report (and of the --folder folder); one input only; default: zip name")
     ap.add_argument("--folder", action="store_true", help=r"put the files into nativePC_mod\<name>\ (a separate mod)")
-    ap.add_argument("--db", type=Path, default=HERE / "data" / "re6_retail_db.json.gz")
+    plain = HERE / "data" / "re6_retail_db.json"
+    ap.add_argument("--db", type=Path, default=plain if plain.exists() else HERE / "data" / "re6_retail_db.json.gz")
     a = ap.parse_args()
     if not a.mods:
         print("把一个或多个 mod 的 .zip 拖到 .bat 上（或作为参数传入）。\n"
